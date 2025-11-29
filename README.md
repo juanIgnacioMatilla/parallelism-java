@@ -2,9 +2,10 @@
 Implementaciones secuenciales y paralelas para multiplicación de matrices y N-Queens.
 
 ## Hardware y entorno  
-**CPU:** AMD Ryzen AI 9 365 — 10 núcleos / 20 hilos — ~1996 MHz  
+**CPU:** AMD Ryzen AI 9 365 — 10 núcleos — ~1996 MHz  
 **SO:** Ubuntu 22.04 (WSL2)  
 **Java:** OpenJDK 21
+
 
 ## Punto a - Versión secuencial  
 **Archivo:** `src/matrix/MatrixSequential.java`
@@ -238,7 +239,7 @@ Los virtual threads muestran un comportamiento de escalabilidad muy estable. A d
 
 En este problema particular, los virtual threads logran un rendimiento **ligeramente superior** a las otras alternativas, sobre todo cuando se utilizan cantidades grandes de hilos virtuales.
 
-### Comparación final — Mejores configuraciones
+### Comparación final - Mejores configuraciones
 
 ![Tiempo vs Configs](plots/summary_comparison.png)
 
@@ -260,3 +261,147 @@ El gráfico resume el mejor desempeño alcanzado por cada implementación:
 
 Las tres variantes paralelas logran una gran mejora de aproximadamente respecto de la versión secuencial.  
 ExecutorService, ForkJoin y Virtual Threads ofrecen desempeños similares y los virtual threads muestran un comportamiento estable incluso con cantidades muy grandes de hilos.
+
+## Punto f - Nqueens
+
+Se repiten todos los puntos realizados para el problema de Nqueens.
+
+### N-Queens secuencial
+
+Archivo: `src/nqueens/NQueensSequential.java`
+
+#### Puntos importantes
+
+- Implementa el algoritmo clásico de backtracking para resolver el problema de N-Queens
+- isSafe() replica exactamente la lógica del código en C de la primera consigna.
+- N es configurable por argumento, permitiendo evaluar distintos tamaños.
+- Imprime el número total de soluciones y el tiempo de ejecución
+
+#### Cómo ejecutarlo
+
+Ejemplo con N = 12:
+```bash
+./scripts/run_nqueens_sequential.sh 12
+```
+Salida esperada:
+```
+Ejecutando NQueensSequential con N=12...
+--------------------------------
+Soluciones para 12 reinas: 14200
+Tiempo (ms): 125.533362
+--------------------------------
+Ejecución finalizada.
+```
+
+### N-Queens ExecutorService
+
+Archivo: `src/nqueens/NQueensExecutor.java`
+
+#### Puntos importantes
+
+- Se paraleliza únicamente la fila inicial (fila 0) porque cada elección de columna en esa fila genera un subárbol de búsqueda independiente del problema N-Queens. Paralelizar en este nivel distribuye subárboles completos entre los hilos, logrando un buen equilibrio entre paralelismo y overhead. Paralelizar niveles más profundos no aporta beneficios, ya que generaría un número excesivo de tareas muy pequeñas y aumentaría innecesariamente el costo de administración del paralelismo, como vimos en el trabajo anterior.
+
+- Como la paralelización realiza únicamente N tareas independientes (una por cada columna posible en la primera fila), aumentar la cantidad de threads más allá de N no produce más trabajo para distribuir. De forma inversa, usar menos threads que tareas sigue funcionando, pero limita el máximo grado de paralelismo.
+
+- El número de threads se configura desde línea de comandos.
+
+- Cada tarea ejecuta el backtracking restante de forma secuencial.
+
+- Se suman los resultados devueltos por cada Future<Long>.
+
+
+#### Cómo ejecutarlo
+
+Ejemplo con 8 hilos y N = 12:
+
+```bash
+./scripts/run_nqueens_executor.sh 8 12
+```
+
+#### Salida esperada
+
+```
+Compilando NQueensExecutor...
+Ejecutando NQueensExecutor con 8 threads, N=12...
+--------------------------------
+Soluciones para 12 reinas: 14200
+Tiempo (ms): 51.295386
+Threads usados: 8
+--------------------------------
+Ejecución finalizada.
+```
+
+### N-Queens ForkJoin
+
+Archivo: `src/nqueens/NQueensForkJoin.java`
+
+#### Puntos importantes
+
+- Implementa una versión paralela usando el framework ForkJoin, aplicando el patrón divide & conquer.
+
+- Se utiliza un threshold que define hasta qué profundidad del árbol de N-Queens se generan tareas paralelas:
+  - Si `row < threshold` → se crean subtareas (`fork`).
+  - Si `row ≥ threshold` → continúa secuencialmente.
+- El N del tablero, número de hilos y el threshold se pueden configurar desde la línea de comandos.
+
+#### Cómo ejecutarlo
+
+Ejemplo usando 8 hilos, N=12 y threshold=2:
+```bash
+./scripts/run_nqueens_forkjoin.sh 8 12 2
+```
+
+#### Salida esperada
+
+```
+Compilando NQueensForkJoin...
+Ejecutando NQueensForkJoin con 8 threads, N=12, threshold=2
+--------------------------------
+Soluciones para 12 reinas: 14200
+Tiempo (ms): 24.135887
+Threads usados: 8
+Threshold usado: 2
+--------------------------------
+Ejecución finalizada.
+```
+
+
+### N-Queens con Virtual Threads
+
+Archivo: `src/nqueens/NQueensVirtual.java`
+
+#### Puntos importantes
+
+- Implementa una versión paralela utilizando Virtual Threads, aprovechando que este modelo permite crear miles de tareas ligeras sin costo significativo.
+
+- Se utiliza un ExecutorService basado en virtual threads (Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory())), que crea un thread virtual por cada tarea enviada.
+
+- Se usa un threshold que define hasta qué profundidad del árbol se generan tareas paralelas.
+
+  - Si row < threshold → se crean mini-tareas en virtual threads.
+
+  - Si row ≥ threshold → el backtracking continúa de forma secuencial.
+
+- Permite configurar por línea de comandos la cantidad de virtual threads a usar, el valor de N y el threshold.
+
+#### Cómo ejecutarlo
+
+Ejemplo usando 200 virtual threads, N=12 y threshold=2:
+
+```bash
+./scripts/run_nqueens_virtual.sh 300 12 2
+```
+
+#### Salida esperada
+
+```
+Compilando NQueensVirtual...
+Ejecutando NQueensVirtual con 300 virtual threads, N=12, threshold=2
+--------------------------------
+Soluciones para 12 reinas: 14200
+Tiempo (ms): 93.227989
+Virtual threads solicitados: 300
+Threshold: 2
+--------------------------------
+Ejecución finalizada.
+```
