@@ -1,0 +1,35 @@
+# === Java ===
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# === Compiled output ===
+/out/
+/bin/
+/target/
+/build/
+
+# === IDEs ===
+# IntelliJ
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# === OS junk ===
+.DS_Store
+Thumbs.db
+
+# === Temporary files ===
+*.tmp
+*.swp
+*.swo
+
