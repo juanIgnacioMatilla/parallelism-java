@@ -73,7 +73,9 @@ Ejecución finalizada.
 **Archivo:** [`src/matrix/MatrixForkJoin.java`](src/matrix/MatrixForkJoin.java)
 
 ### Puntos importantes  
-- Implementa paralelismo usando el framework **ForkJoin**, dividiendo recursivamente el rango de filas en subtareas hasta alcanzar un `threshold` configurable.  
+- Implementa paralelismo usando el framework **ForkJoin**, A diferencia de un ExecutorService, el ForkJoinPool implementa work stealing, lo cual permite balancear dinámicamente subtareas entre threads cuando algunos terminan antes que otros.
+- El threshold determina cuántas filas de la matriz C se procesan en forma secuencial dentro de una sola tarea ForkJoin.
+- El patrón divide & conquer aparece en el método `compute()`, donde se hace crean 2 tareas nuevas cuando `rows > threshold`, la tarea se parte exactamente a la mitad generando dos subtareas y asi recursivamente hasta llegar al valor del threshold.
 - Permite ajustar tanto la cantidad de hilos como el `threshold` desde la línea de comandos.  
 - Produce el mismo resultado que las versiones anteriores y muestra el tiempo de ejecución, los hilos utilizados y el threshold aplicado.
 
@@ -300,7 +302,9 @@ Archivo: [`src/nqueens/NQueensExecutor.java`](src/nqueens/NQueensExecutor.java)
 #### Puntos importantes
 
 - Se paraleliza únicamente la fila inicial (fila 0) porque cada elección de columna en esa fila genera un subárbol de búsqueda independiente del problema N-Queens. Paralelizar en este nivel distribuye subárboles completos entre los hilos, logrando un buen equilibrio entre paralelismo y overhead. Se podria paralelizar a niveles más profundos, cuidando no profundizar de mas ya que llegado a cierto nivel no aporta beneficios, ya que generaría un número excesivo de tareas muy pequeñas y aumentaría innecesariamente el costo de administración del paralelismo, como vimos en el trabajo anterior.
-
+- `submit()` lanza tareas paralelas y devuelve un Future por cada una.
+- Los futures se guardan en una lista para esperar a todas las tareas.
+- `get()` obtiene el resultado de cada cálculo y sincroniza la ejecución.
 - Como la paralelización realiza únicamente N tareas independientes (una por cada columna posible en la primera fila), aumentar la cantidad de threads más allá de N no produce más trabajo para distribuir. De forma inversa, usar menos threads que tareas sigue funcionando, pero limita el máximo grado de paralelismo.
 
 - El número de threads se configura desde línea de comandos.
@@ -372,9 +376,24 @@ Archivo: [`src/nqueens/NQueensVirtual.java`](src/nqueens/NQueensVirtual.java)
 
 #### Puntos importantes
 
-- Implementa una versión paralela utilizando Virtual Threads con `Executors.newThreadPerTaskExecutor(...)`, aprovechando que este modelo permite crear miles de tareas ligeras sin costo significativo.
+- Implementa una versión paralela utilizando Virtual Threads con `Executors.newThreadPerTaskExecutor(...)`, que ejecutá cada tarea en su propio virtual thread independiente.
 
 - Ya no se configura la cantidad de virtual threads por parámetro, sino que se deriva del parametro threshold, el cual indica la profundidad hasta la cual se paraleliza.
+
+- Para contar adecuadamente la cantidad de threads se utiliza `AtomicInteger VT_COUNT` junto con (aca tambien se especifican que sean virtual threads):
+```java
+        ThreadFactory baseFactory = Thread.ofVirtual()
+                .name("vthread-", 0)
+                .factory();
+
+        ThreadFactory countingFactory = runnable -> {
+            VT_COUNT.incrementAndGet();
+            return baseFactory.newThread(runnable);
+        };
+
+        EXECUTOR = Executors.newThreadPerTaskExecutor(countingFactory);
+```
+- Se utiliza un `AtomicInteger` ya que es estan creando virtual threads en paralelo desde múltiples tareas, y por lo tanto el contador de threads debe ser thread-safe.
 
 - Se usa un threshold que define hasta qué profundidad del árbol se generan tareas paralelas.
 
