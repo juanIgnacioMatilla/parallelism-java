@@ -15,12 +15,13 @@ FORKJOIN_THREADS = [1, 2, 4, 8, 12, 16, 20]
 FORKJOIN_THRESHOLDS = [16, 32, 64, 128]
 VIRTUAL_THREADS = [1, 2, 4, 8, 16, 32, 64, 256, 512, 1024]
 
-SEQ_CMD = "/home/jmatilla/tp-concurrencia/scripts/run_matrix_sequential.sh"
-EXECUTOR_CMD = "/home/jmatilla/tp-concurrencia/scripts/run_matrix_executor.sh"
-FORKJOIN_CMD = "/home/jmatilla/tp-concurrencia/scripts/run_matrix_forkjoin.sh"
-VIRTUAL_CMD = "/home/jmatilla/tp-concurrencia/scripts/run_matrix_virtual.sh"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-os.makedirs("./plots", exist_ok=True)
+SEQ_CMD = os.path.join(SCRIPT_DIR, "run_matrix_sequential.sh")
+EXECUTOR_CMD = os.path.join(SCRIPT_DIR, "run_matrix_executor.sh")
+FORKJOIN_CMD = os.path.join(SCRIPT_DIR, "run_matrix_forkjoin.sh")
+VIRTUAL_CMD = os.path.join(SCRIPT_DIR, "run_matrix_virtual.sh")
+os.makedirs("./plots_matrix", exist_ok=True)
 
 
 # ===================================================================
@@ -89,7 +90,7 @@ def plot_executor(results):
     ax.set_xlabel("Threads")
     ax.set_ylabel("Tiempo (ms)")
     ax.grid(True)
-    fig.savefig("./plots/executor_times.png")
+    fig.savefig("./plots_matrix/executor_times.png")
 
 
 def plot_forkjoin(results):
@@ -113,7 +114,7 @@ def plot_forkjoin(results):
     ax.set_ylabel("Tiempo (ms)")
     ax.grid(True)
     ax.legend()
-    fig.savefig("./plots/forkjoin_times.png")
+    fig.savefig("./plots_matrix/forkjoin_times.png")
 
 
 def plot_virtual(results):
@@ -136,7 +137,7 @@ def plot_virtual(results):
     ax.set_ylabel("Tiempo (ms)")
     ax.grid(True, which="both", axis="both")
 
-    fig.savefig("./plots/virtual_times.png")
+    fig.savefig("./plots_matrix/virtual_times.png")
 
 
 def plot_summary(seq, exec_res, fj_res, virt_res):
@@ -168,7 +169,7 @@ def plot_summary(seq, exec_res, fj_res, virt_res):
     ax.set_ylabel("Tiempo (ms)")
     ax.set_title("Comparación final — mejores configuraciones")
     ax.grid(True, axis='y')
-    fig.savefig("./plots/summary_comparison.png")
+    fig.savefig("./plots_matrix/summary_comparison.png")
 
 
 # ===================================================================
@@ -193,5 +194,5 @@ if __name__ == "__main__":
     plot_virtual(virt_res)
     plot_summary(seq, exec_res, fj_res, virt_res)
 
-    print("Gráficos generados en ./plots/")
+    print("Gráficos generados en ./plots_matrix/")
 

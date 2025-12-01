@@ -9,15 +9,15 @@ import os
 # CONFIGURACIÓN GENERAL
 # ================================================================
 
-N_RUNS = 5
+N_RUNS = 10
 
 THREAD_COUNTS = [1, 2, 4, 8, 12, 16, 20]
-N_VALUES = [10, 12, 14]
+N_VALUES = [12, 13, 14]
 
 HEATMAP_THREADS = [1, 2, 4, 8, 12, 16, 20]
-HEATMAP_THRESHOLDS = [1, 2, 3, 4]
+HEATMAP_THRESHOLDS = [1, 2, 4, 8, 12]
 
-VIRTUAL_THREAD_COUNTS = [1, 10, 50, 100, 200, 400, 800]
+VIRTUAL_THRESHOLDS = [1, 2, 3, 4, 5, 6, 7, 8]
 
 EXECUTOR_CMD = "./scripts/run_nqueens_executor.sh"
 FORKJOIN_CMD = "./scripts/run_nqueens_forkjoin.sh"
@@ -36,6 +36,25 @@ def run_and_get_time(cmd):
         if "Tiempo (ms)" in line:
             return float(line.split(":")[1].strip())
     raise RuntimeError("No se encontró 'Tiempo (ms)' en la salida: " + result.stdout)
+
+
+def run_time_and_vt(cmd):
+    """Devuelve (tiempo_ms, virtual_threads_creados)."""
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+    tiempo = None
+    vt = None
+
+    for line in result.stdout.splitlines():
+        if "Tiempo (ms)" in line:
+            tiempo = float(line.split(":")[1].strip())
+        elif "Virtual threads realmente creados" in line:
+            vt = int(line.split(":")[1].strip())
+
+    if tiempo is None or vt is None:
+        raise RuntimeError("No se encontraron datos en el output:\n" + result.stdout)
+
+    return tiempo, vt
 
 
 # ================================================================
@@ -87,35 +106,32 @@ def bench_forkjoin(nqueen_size, threshold=None):
         return results
 
 
-def bench_virtual(nqueen_size, threshold=None):
-    if threshold is None:
-        print(f"\n[VirtualThreads] N={nqueen_size}")
-        results = {}
-        for th in VIRTUAL_THREAD_COUNTS:
-            print(f"  -> VirtualThreads={th}... ", end="", flush=True)
-            times = []
-            for _ in range(N_RUNS):
-                t = run_and_get_time(f"{VIRTUAL_CMD} {th} {nqueen_size}")
-                times.append(t)
-                print(".", end="", flush=True)
-            print(" OK")
-            results[th] = {"mean": statistics.mean(times), "std": statistics.stdev(times)}
-        return results
+def bench_virtual(nqueen_size):
+    print(f"\n[VirtualThreads] N={nqueen_size}")
+    results = {}
 
-    else:
-        print(f"\n[VirtualThreads Heatmap] N={nqueen_size}")
-        results = {}
-        for t in VIRTUAL_THREAD_COUNTS:
-            for th in HEATMAP_THRESHOLDS:
-                print(f"  -> VirtualThreads={t}, threshold={th}... ", end="", flush=True)
-                times = []
-                for _ in range(N_RUNS):
-                    val = run_and_get_time(f"{VIRTUAL_CMD} {t} {nqueen_size} {th}")
-                    times.append(val)
-                    print(".", end="", flush=True)
-                print(" OK")
-                results[(t, th)] = statistics.mean(times)
-        return results
+    for th in VIRTUAL_THRESHOLDS:
+        print(f"  -> threshold={th}... ", end="", flush=True)
+
+        times = []
+        vtc = []
+
+        for _ in range(N_RUNS):
+            t, vt = run_time_and_vt(f"{VIRTUAL_CMD} {nqueen_size} {th}")
+            times.append(t)
+            vtc.append(vt)
+            print(".", end="", flush=True)
+
+        print(" OK")
+
+        results[th] = {
+            "mean": statistics.mean(times),
+            "std": statistics.stdev(times),
+            "vt_mean": statistics.mean(vtc),
+            "vt_std": statistics.stdev(vtc)
+        }
+
+    return results
 
 
 def bench_sequential(nqueen_size):
@@ -135,11 +151,8 @@ def plot_executor(results_by_n):
         ys = [results[t]["mean"] for t in xs]
         stds = [results[t]["std"] for t in xs]
 
-        plt.errorbar(
-            xs, ys, yerr=stds,
-            fmt="o-", capsize=4, elinewidth=1, capthick=1,
-            label=f"N={N}"
-        )
+        plt.errorbar(xs, ys, yerr=stds,
+                     fmt="o-", capsize=4, label=f"N={N}")
 
     plt.xticks(xs)
     plt.xlabel("Threads")
@@ -157,11 +170,8 @@ def plot_forkjoin(results_by_n):
         ys = [results[t]["mean"] for t in xs]
         stds = [results[t]["std"] for t in xs]
 
-        plt.errorbar(
-            xs, ys, yerr=stds,
-            fmt="o-", capsize=4, elinewidth=1, capthick=1,
-            label=f"N={N}"
-        )
+        plt.errorbar(xs, ys, yerr=stds,
+                     fmt="o-", capsize=4, label=f"N={N}")
 
     plt.xticks(xs)
     plt.xlabel("Threads")
@@ -173,26 +183,49 @@ def plot_forkjoin(results_by_n):
 
 
 def plot_virtual(results_by_n):
-    plt.figure()
+    print("\n=== Conversión threshold → virtual threads creados ===")
+
+    plt.figure(figsize=(11, 6))
+
     for N, results in results_by_n.items():
-        xs = sorted(results.keys())
-        ys = [results[t]["mean"] for t in xs]
-        stds = [results[t]["std"] for t in xs]
+        thresholds = sorted(results.keys())
+        vt_values = [results[th]["vt_mean"] for th in thresholds]
+        times = [results[th]["mean"] for th in thresholds]
+        stds = [results[th]["std"] for th in thresholds]
+
+        # Print conversion table for this N
+        print(f"\nN={N}:")
+        for th in thresholds:
+            print(f"  th={th} -> VT creados promedio={int(results[th]['vt_mean'])}")
 
         plt.errorbar(
-            xs, ys, yerr=stds,
-            fmt="o-", capsize=4, elinewidth=1, capthick=1,
+            vt_values,
+            times,
+            yerr=stds,
+            fmt="o-",
+            capsize=4,
             label=f"N={N}"
         )
 
+    # Escala logaritmica en eje X
     plt.xscale("log")
-    plt.xticks(VIRTUAL_THREAD_COUNTS, VIRTUAL_THREAD_COUNTS)
-    plt.xlabel("Virtual Threads (log)")
+
+    # Mostrar SOLO ticks de 10^1, 10^2, 10^3, etc.
+    import numpy as np
+    log_min = 1
+    log_max = 7   # hasta 10^7 por si threshold grande
+    ticks = [10 ** i for i in range(log_min, log_max + 1)]
+    plt.xticks(ticks, [f"$10^{i}$" for i in range(log_min, log_max + 1)])
+
+    plt.xlabel("Virtual Threads creados (log)")
     plt.ylabel("Tiempo (ms)")
-    plt.title("Virtual Threads — Tiempo vs Threads")
+    plt.title("Virtual Threads — Tiempo vs Virtual Threads creados (log scale)")
+    plt.grid(True, which="both", ls="--", lw=0.5)
     plt.legend()
-    plt.grid(True)
-    plt.savefig("./plots_nqueens/virtual_vs_threads.png")
+    plt.tight_layout()
+
+    plt.savefig("./plots_nqueens/virtual_vt_vs_time_log.png")
+    plt.close()
 
 
 def plot_heatmap(results, title, filename, threads, thresholds):
@@ -201,15 +234,28 @@ def plot_heatmap(results, title, filename, threads, thresholds):
         for j, th in enumerate(thresholds):
             data[i, j] = results[(t, th)]
 
+    # Crear formato string sin notación científica
+    formatted = np.empty_like(data, dtype=object)
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            formatted[i, j] = f"{data[i, j]:.0f}"   # sin decimales, sin e+03
+
     plt.figure(figsize=(8, 6))
+
     sns.heatmap(
-        data, annot=True, cmap="viridis",
-        xticklabels=thresholds, yticklabels=threads
+        data,
+        annot=formatted,          # anotaciones string
+        fmt="",                   # ¡IMPORTANTE! evita que seaborn aplique formato numérico
+        cmap="viridis",
+        xticklabels=thresholds,
+        yticklabels=threads
     )
+
     plt.xlabel("Threshold")
     plt.ylabel("Threads")
     plt.title(title)
     plt.savefig(f"./plots_nqueens/{filename}")
+    plt.close()
 
 
 def plot_final_comparison(seq_time, best_exec, best_fj, best_virt):
@@ -238,28 +284,21 @@ if __name__ == "__main__":
     virtual_results = {N: bench_virtual(N) for N in N_VALUES}
     plot_virtual(virtual_results)
 
-    fj_heat = bench_forkjoin(12, threshold=True)
+    # Heatmap FORKJOIN: ahora con N=14
+    fj_heat = bench_forkjoin(14, threshold=True)
     plot_heatmap(
         fj_heat,
-        "ForkJoin — Heatmap tiempo",
+        "ForkJoin — Heatmap tiempo (N=14)",
         "forkjoin_heatmap.png",
         HEATMAP_THREADS,
-        HEATMAP_THRESHOLDS,
+        HEATMAP_THRESHOLDS
     )
 
-    virt_heat = bench_virtual(12, threshold=True)
-    plot_heatmap(
-        virt_heat,
-        "Virtual Threads — Heatmap tiempo",
-        "virtual_heatmap.png",
-        VIRTUAL_THREAD_COUNTS,
-        HEATMAP_THRESHOLDS,
-    )
+    seq = bench_sequential(14)
+    best_exec = min(v["mean"] for v in executor_results[14].values())
+    best_fj = min(v["mean"] for v in forkjoin_results[14].values())
+    best_virt = min(v["mean"] for v in virtual_results[14].values())
 
-    seq = bench_sequential(12)
-    best_exec = min(v["mean"] for v in executor_results[12].values())
-    best_fj = min(v["mean"] for v in forkjoin_results[12].values())
-    best_virt = min(v["mean"] for v in virtual_results[12].values())
     plot_final_comparison(seq, best_exec, best_fj, best_virt)
 
     print("\nListo. Gráficos guardados en plots_nqueens/\n")

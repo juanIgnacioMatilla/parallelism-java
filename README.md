@@ -8,7 +8,7 @@ Implementaciones secuenciales y paralelas para multiplicación de matrices y N-Q
 
 
 ## Punto a - Versión secuencial  
-**Archivo:** `src/matrix/MatrixSequential.java`
+**Archivo:** [`src/matrix/MatrixSequential.java`](src/matrix/MatrixSequential.java)
 
 ### Puntos importantes  
 - Implementa la multiplicación de matrices 1024×1024 usando triple bucle como en el ejemplo de la consigna.  
@@ -35,7 +35,7 @@ Ejecución finalizada.
 ```
 
 ## Punto b - Versión paralela con ExecutorService  
-**Archivo:** `src/matrix/MatrixExecutor.java`
+**Archivo:** [`src/matrix/MatrixExecutor.java`](src/matrix/MatrixExecutor.java)
 
 ### Puntos importantes  
 - Paraleliza el cálculo por **filas**, enviando cada una como tarea al `ExecutorService` con la funcion `executor.submit`.  
@@ -70,7 +70,7 @@ Ejecución finalizada.
 ```
 
 ## Punto c - Versión paralela con ForkJoin  
-**Archivo:** `src/matrix/MatrixForkJoin.java`
+**Archivo:** [`src/matrix/MatrixForkJoin.java`](src/matrix/MatrixForkJoin.java)
 
 ### Puntos importantes  
 - Implementa paralelismo usando el framework **ForkJoin**, dividiendo recursivamente el rango de filas en subtareas hasta alcanzar un `threshold` configurable.  
@@ -105,7 +105,7 @@ Ejecución finalizada.
 ```
 
 ## Punto e - Versión paralela con Virtual Threads  
-**Archivo:** `src/matrix/MatrixVirtual.java`
+**Archivo:** [`src/matrix/MatrixVirtual.java`](src/matrix/MatrixVirtual.java)
 
 ### Puntos importantes  
 - Reimplementa la versión del punto **b)** reemplazando el `ExecutorService` por **virtual threads** utilizando `Thread.startVirtualThread`.  
@@ -166,7 +166,7 @@ source .venv/bin/activate
 python3 scripts/benchmarks-matrix.py
 ```
 
-Los gráficos generados se guardan automáticamente en el directorio `/plots`
+Los gráficos generados se guardan automáticamente en el directorio `/plots_matrix`
 
 Se pueden variar las configuraciones cambiando la seccion al comienzo del script, las configuraciones utilizadas para los graficos fueron las siguientes:
 ```python
@@ -182,7 +182,7 @@ A continuación se presentan los resultados obtenidos y las conclusiones derivad
 
 ### Resultados - ExecutorService
 
-![Tiempo vs Threads — ExecutorService](plots/executor_times.png)
+![Tiempo vs Threads — ExecutorService](plots_matrix/executor_times.png)
 
 El gráfico muestra cómo varía el tiempo de ejecución al aumentar la cantidad de threads utilizados en la versión paralela con `ExecutorService`.
 
@@ -197,7 +197,7 @@ El rendimiento mejora significativamente hasta aproximadamente **8 threads**, lu
 
 ### Resultados - ForkJoin
 
-![Tiempo vs Threads vs Thresholds — ForkJoin](plots/forkjoin_times.png)
+![Tiempo vs Threads vs Thresholds — ForkJoin](plots_matrix/forkjoin_times.png)
 
 El gráfico muestra el tiempo de ejecución para la versión paralela usando el framework **ForkJoin**, evaluando combinaciones de distintos valores de `threads` y `threshold`.
 
@@ -217,7 +217,7 @@ En general, ForkJoin no ofrece una ventaja significativa sobre ExecutorService p
 
 ### Resultados - Virtual Threads
 
-![Tiempo vs Threads — VirtualThreads](plots/virtual_times.png)
+![Tiempo vs Threads — VirtualThreads](plots_matrix/virtual_times.png)
 
 Este gráfico muestra cómo varía el tiempo de ejecución al utilizar **virtual threads**, usando una escala logarítmica en el eje X para visualizar adecuadamente configuraciones desde 1 hasta 1024 hilos virtuales.
 
@@ -232,16 +232,16 @@ Este gráfico muestra cómo varía el tiempo de ejecución al utilizar **virtual
 - El mejor tiempo medido se encuentra alrededor de **1024 virtual threads**, cercano a **230ms**.
 
 #### Conclusión
-Los virtual threads muestran un comportamiento de escalabilidad muy estable. A diferencia de los hilos tradicionales, donde el overhead del sistema operativo limita el paralelismo más allá de cierto punto, los virtual threads permiten crear cientos o miles de hilos sin costo significativo. Esto produce:
+Los virtual threads muestran un comportamiento de escalabilidad muy estable. A diferencia de los hilos tradicionales, donde el overhead del sistema operativo limita la creacion de threads hasta cierto punto, los virtual threads permiten crear cientos o miles de hilos sin costo significativo. Esto produce:
 
 - Rendimiento levemente mejor que ExecutorService y ForkJoin.
 - Muy poco overhead agregado incluso con **1024 hilos virtuales**, algo impráctico con platform threads.
 
-En este problema particular, los virtual threads logran un rendimiento **ligeramente superior** a las otras alternativas, sobre todo cuando se utilizan cantidades grandes de hilos virtuales.
+En este problema particular, los virtual threads logran un rendimiento **apenas superior** porque no aumentan el paralelismo de hardware (siguen ejecutándose sobre la misma cantidad fija de núcleos) y, además, no existe I/O bloqueante que justifique su modelo de concurrencia. Como el trabajo es completamente CPU-bound, crear más virtual threads no aporta una mejora adicional.
 
 ### Comparación final - Mejores configuraciones
 
-![Tiempo vs Configs](plots/summary_comparison.png)
+![Tiempo vs Configs](plots_matrix/summary_comparison.png)
 
 El gráfico resume el mejor desempeño alcanzado por cada implementación:
 
@@ -260,7 +260,7 @@ El gráfico resume el mejor desempeño alcanzado por cada implementación:
 #### Conclusión general del punto d)
 
 Las tres variantes paralelas logran una gran mejora de aproximadamente respecto de la versión secuencial.  
-ExecutorService, ForkJoin y Virtual Threads ofrecen desempeños similares y los virtual threads muestran un comportamiento estable incluso con cantidades muy grandes de hilos.
+ExecutorService, ForkJoin y Virtual Threads ofrecen desempeños similares, ademas los virtual threads muestran un comportamiento estable incluso con cantidades muy grandes de hilos.
 
 ## Punto f - Nqueens
 
@@ -268,7 +268,7 @@ Se repiten todos los puntos realizados para el problema de Nqueens.
 
 ### N-Queens secuencial
 
-Archivo: `src/nqueens/NQueensSequential.java`
+Archivo: [`src/nqueens/NQueensSequential.java`](src/nqueens/NQueensSequential.java)
 
 #### Puntos importantes
 
@@ -295,11 +295,11 @@ Ejecución finalizada.
 
 ### N-Queens ExecutorService
 
-Archivo: `src/nqueens/NQueensExecutor.java`
+Archivo: [`src/nqueens/NQueensExecutor.java`](src/nqueens/NQueensExecutor.java)
 
 #### Puntos importantes
 
-- Se paraleliza únicamente la fila inicial (fila 0) porque cada elección de columna en esa fila genera un subárbol de búsqueda independiente del problema N-Queens. Paralelizar en este nivel distribuye subárboles completos entre los hilos, logrando un buen equilibrio entre paralelismo y overhead. Paralelizar niveles más profundos no aporta beneficios, ya que generaría un número excesivo de tareas muy pequeñas y aumentaría innecesariamente el costo de administración del paralelismo, como vimos en el trabajo anterior.
+- Se paraleliza únicamente la fila inicial (fila 0) porque cada elección de columna en esa fila genera un subárbol de búsqueda independiente del problema N-Queens. Paralelizar en este nivel distribuye subárboles completos entre los hilos, logrando un buen equilibrio entre paralelismo y overhead. Se podria paralelizar a niveles más profundos, cuidando no profundizar de mas ya que llegado a cierto nivel no aporta beneficios, ya que generaría un número excesivo de tareas muy pequeñas y aumentaría innecesariamente el costo de administración del paralelismo, como vimos en el trabajo anterior.
 
 - Como la paralelización realiza únicamente N tareas independientes (una por cada columna posible en la primera fila), aumentar la cantidad de threads más allá de N no produce más trabajo para distribuir. De forma inversa, usar menos threads que tareas sigue funcionando, pero limita el máximo grado de paralelismo.
 
@@ -333,7 +333,7 @@ Ejecución finalizada.
 
 ### N-Queens ForkJoin
 
-Archivo: `src/nqueens/NQueensForkJoin.java`
+Archivo: [`src/nqueens/NQueensForkJoin.java`](src/nqueens/NQueensForkJoin.java)
 
 #### Puntos importantes
 
@@ -368,13 +368,13 @@ Ejecución finalizada.
 
 ### N-Queens con Virtual Threads
 
-Archivo: `src/nqueens/NQueensVirtual.java`
+Archivo: [`src/nqueens/NQueensVirtual.java`](src/nqueens/NQueensVirtual.java)
 
 #### Puntos importantes
 
-- Implementa una versión paralela utilizando Virtual Threads, aprovechando que este modelo permite crear miles de tareas ligeras sin costo significativo.
+- Implementa una versión paralela utilizando Virtual Threads con `Executors.newThreadPerTaskExecutor(...)`, aprovechando que este modelo permite crear miles de tareas ligeras sin costo significativo.
 
-- Se utiliza un ExecutorService basado en virtual threads (Executors.newThreadPerTaskExecutor(Thread.ofVirtual().factory())), que crea un thread virtual por cada tarea enviada.
+- Ya no se configura la cantidad de virtual threads por parámetro, sino que se deriva del parametro threshold, el cual indica la profundidad hasta la cual se paraleliza.
 
 - Se usa un threshold que define hasta qué profundidad del árbol se generan tareas paralelas.
 
@@ -386,22 +386,183 @@ Archivo: `src/nqueens/NQueensVirtual.java`
 
 #### Cómo ejecutarlo
 
-Ejemplo usando 200 virtual threads, N=12 y threshold=2:
+Ejemplo usando N=12 y threshold=2:
 
 ```bash
-./scripts/run_nqueens_virtual.sh 300 12 2
+./scripts/run_nqueens_virtual.sh 12 2
 ```
 
 #### Salida esperada
 
 ```
 Compilando NQueensVirtual...
-Ejecutando NQueensVirtual con 300 virtual threads, N=12, threshold=2
+Ejecutando NQueensVirtual con N=12, threshold=2
 --------------------------------
-Soluciones para 12 reinas: 14200
-Tiempo (ms): 93.227989
-Virtual threads solicitados: 300
-Threshold: 2
+=== NQueensVirtual (count VT) ===
+N=12, threshold=2
+Tiempo (ms): 67.360695
+Soluciones: 14200
+Virtual threads realmente creados: 122
 --------------------------------
 Ejecución finalizada.
 ```
+
+
+### Comparación de tiempos de ejecución para N-Queens
+
+Para evaluar el rendimiento de las variantes secuencial, ExecutorService, ForkJoin y Virtual Threads aplicadas al problema de N-Queens, se desarrolló el script scripts/benchmarks-nqueens.py, el cual automatiza completamente la ejecución y generación de gráficos.
+
+#### Cómo funciona el script de benchmarks
+
+Ejecuta cada implementación varias veces (por defecto 10 runs por configuración) para obtener un tiempo promedio estable.
+
+Para cada combinación mide:
+- Tiempo promedio (mean)
+- Desvío estándar (std)
+
+Para ExecutorService se varia:
+- Número de threads reales
+- Tamaño del problema 
+
+Para ForkJoin se varia:
+- Número de threads.
+- Threshold de paralelización 
+- Tamaño del problema
+
+Para Virtual Threads 
+- Solo se varía el threshold, que controla cuántas subtareas paralelas se generan.
+
+Genera:
+- Gráficos “tiempo vs threads” para ExecutorService
+- Gráficos “tiempo vs threads” para ForkJoin
+- Gráficos “tiempo vs virtual threads creados”
+- Heatmaps de tiempo para combinaciones threads × threshold para forkjoin
+- Un gráfico final comparando las mejores configuraciones de cada método
+
+Todos los gráficos incluyen barras de error reflejando la variabilidad de las ejecuciones.
+
+
+#### Cómo ejecutar el benchmark
+
+```bash
+python3 scripts/benchmarks-nqueens.py
+```
+
+Esto generará todos los gráficos dentro del directorio:
+```
+plots_nqueens/
+```
+
+
+#### Configuraciones utilizadas
+
+```python
+N_RUNS = 10
+
+THREAD_COUNTS = [1, 2, 4, 8, 12, 16, 20]
+N_VALUES = [12, 13, 14]
+
+HEATMAP_THREADS = [1, 2, 4, 8, 12, 16, 20]
+HEATMAP_THRESHOLDS = [1, 2, 4, 8, 12]
+
+VIRTUAL_THRESHOLDS = [1, 2, 3, 4, 5, 6, 7, 8]
+```
+
+#### Resultados - ExecutorService (N-Queens)
+
+![Executor nqueens](plots_nqueens/executor_vs_threads.png)
+
+El gráfico muestra cómo varía el tiempo de ejecución en la versión paralela con ExecutorService al aumentar la cantidad de threads, evaluado sobre distintos tamaños del problema N.
+
+##### Observaciones principales
+
+- Para `N = 12` aumentar la cantidad de threads produce mejoras poco visibles.
+
+- Para `N = 13` aumentar la cantidad de threads produce mejoras un poco mas visibles.
+
+- Para `N = 14`, el tiempo cae fuertemente al aumentar los threads.
+
+- A partir de una cantidad de threads la curva se estabiliza y no hay mayor beneficio en seguir aumentando la cantidad.
+
+##### Conclusión
+
+- El rendimiento de ExecutorService mejora fuertemente para N más grandes (especialmente N=14).
+
+- Para instancias pequeñas (N=12) no hay beneficio claro en la paralelizacion.
+
+
+
+#### Resultados - Forkjoin (N-Queens)
+
+![Forkjoin nqueens](plots_nqueens/forkjoin_vs_threads.png)
+
+Este gráfico muestra cómo varía el tiempo de ejecución de la implementación ForkJoin al aumentar la cantidad de threads, para distintos tamaños del problema N.
+
+##### Observaciones principales
+
+- Para N=12, la variación con los threads es mínima: el problema es demasiado chico para beneficiarse de la paralelización.
+
+- Para N = 13, se empieza a observa una mejora a medida que se aumentan los threads.
+
+- Para N = 14, sí se observa una mejora significativa a medida que se aumentan los threads.
+
+![Forkjoin nqueens](plots_nqueens/forkjoin_heatmap.png)
+
+El heatmap muestra el efecto combinado de cantidad de threads y threshold, fijando N=14.
+
+##### Observaciones principales
+
+- Threshold muy bajo implica poca paralelización.
+
+- La mejor zona esta en un Threshold intermedio (4).
+
+- A medida que el threshold aumenta, se crean más subtareas y ForkJoin aprovecha mejor los threads (hasta cierto punto, luego se vuelve contraproducente).
+
+- Al aumentar la cantidad de threads disminuye el tiempo de ejecucion
+
+###### Conclusión
+
+- Para problemas pequeños (N=12), no se obtienen beneficios al paralelizar
+
+- Para problemas más grandes (N=14), se observa un escalado muy similar a ExecutorService:
+mejora rápida hasta 8 threads.
+
+- La mejor combinacion se da para el threshold 4 y 20 threads, se logra el mejor equilibrio de granularidad de tareas. 
+
+
+#### Resultados - Virtual Threads (N-Queens)
+
+![Virtual nqueens](plots_nqueens/virtual_vt_vs_time_log.png)
+
+El gráfico muestra cómo evoluciona el tiempo de ejecución al incrementar la cantidad de virtual threads para resolver N-Queens.
+
+##### Observaciones principales
+
+- La cantidad de virtual threads creados crece explosivamente con el threshold, llegando a cientos de miles o millones, pero el tiempo no baja: se mantiene relativamente estable y luego empieza a aumentar.
+
+- A partir de cierto punto, el tiempo sube rápidamente, indicando que el exceso de tareas genera overhead en lugar de paralelismo útil.
+
+
+###### Conclusión
+
+Los virtual threads no aceleran N-Queens porque incluso con el threshold más bajo ya se generan al menos 12 tareas. Eso ya satura la capacidad de paralelismo real que la JVM puede explotar sobre los mismos carrier threads y la misma cantidad de núcleos físicos.
+
+Aumentar el threshold solo multiplica la cantidad de virtual threads, pero no incrementa el paralelismo que viene del lado del hardware, porque los virtual threads siguen ejecutándose sobre un número fijo de platform threads. Además, como N-Queens es un problema CPU-bound y no depende de I/O bloqueante, los virtual threads no aportan ninguna ventaja, al contrario, generan overhead al crear y coordinar millones de subtareas sin aumentar la capacidad de cómputo real. De todas maneras podemos observar el bajo costo de overhead que generan en comparacion con los platform threads, que con muchisimos menos ya implican un overhead muchisimo mayor.
+
+
+#### Comparacion final (N-Queens)
+
+![Final Comparision (N-queens)](plots_nqueens/final_comparison.png)
+
+El gráfico muestra las mejores configuraciones, para N = 14.
+
+###### Observaciones principales
+- Secuencial es claramente la más lenta.
+- ExecutorService reduce el tiempo de forma importante frente a Secuencial.
+- ForkJoin y Virtual Threads son la más rápidas.
+
+###### Conclusión
+
+ForkJoin y Virtual Threads obtienen el mejor rendimiento porque utilizan al maximo los recursos de hardware en sus mejores configuraciones. Executor mejora, pero está limitado por paralelizar solo el primer nivel. Sobre Virtual Threads si bien permiten crear muchas tareas, la JVM sigue usando la misma cantidad de núcleos y, al no haber I/O bloqueante, el modelo de Virtual Threads no aporta beneficios en un problema puramente CPU-bound.
+
+
