@@ -493,7 +493,7 @@ VIRTUAL_THRESHOLDS = [1, 2, 3, 4, 5, 6, 7, 8]
 
 El gráfico muestra cómo varía el tiempo de ejecución en la versión paralela con ExecutorService al aumentar la cantidad de threads, evaluado sobre distintos tamaños del problema N.
 
-##### Observaciones principales
+#### Observaciones principales
 
 - Para `N = 12` aumentar la cantidad de threads produce mejoras poco visibles.
 
@@ -503,7 +503,7 @@ El gráfico muestra cómo varía el tiempo de ejecución en la versión paralela
 
 - A partir de una cantidad de threads la curva se estabiliza y no hay mayor beneficio en seguir aumentando la cantidad.
 
-##### Conclusión
+#### Conclusión
 
 - El rendimiento de ExecutorService mejora fuertemente para N más grandes (especialmente N=14).
 
@@ -517,7 +517,7 @@ El gráfico muestra cómo varía el tiempo de ejecución en la versión paralela
 
 Este gráfico muestra cómo varía el tiempo de ejecución de la implementación ForkJoin al aumentar la cantidad de threads, para distintos tamaños del problema N.
 
-##### Observaciones principales
+#### Observaciones principales
 
 - Para N=12, la variación con los threads es mínima: el problema es demasiado chico para beneficiarse de la paralelización.
 
@@ -529,7 +529,7 @@ Este gráfico muestra cómo varía el tiempo de ejecución de la implementación
 
 El heatmap muestra el efecto combinado de cantidad de threads y threshold, fijando N=14.
 
-##### Observaciones principales
+#### Observaciones principales
 
 - Threshold muy bajo implica poca paralelización.
 
@@ -539,7 +539,7 @@ El heatmap muestra el efecto combinado de cantidad de threads y threshold, fijan
 
 - Al aumentar la cantidad de threads disminuye el tiempo de ejecucion
 
-###### Conclusión
+##### Conclusión
 
 - Para problemas pequeños (N=12), no se obtienen beneficios al paralelizar
 
@@ -562,7 +562,7 @@ El gráfico muestra cómo evoluciona el tiempo de ejecución al incrementar la c
 - A partir de cierto punto, el tiempo sube rápidamente, indicando que el exceso de tareas genera overhead en lugar de paralelismo útil.
 
 
-###### Conclusión
+##### Conclusión
 
 Los virtual threads no aceleran N-Queens porque incluso con el threshold más bajo ya se generan al menos 12 tareas. Eso ya satura la capacidad de paralelismo real que la JVM puede explotar sobre los mismos carrier threads y la misma cantidad de núcleos físicos.
 
@@ -575,12 +575,12 @@ Aumentar el threshold solo multiplica la cantidad de virtual threads, pero no in
 
 El gráfico muestra las mejores configuraciones, para N = 14.
 
-###### Observaciones principales
+##### Observaciones principales
 - Secuencial es claramente la más lenta.
 - ExecutorService reduce el tiempo de forma importante frente a Secuencial.
 - ForkJoin y Virtual Threads son la más rápidas.
 
-###### Conclusión
+##### Conclusión
 
 ForkJoin y Virtual Threads obtienen el mejor rendimiento porque utilizan al maximo los recursos de hardware en sus mejores configuraciones. Executor mejora, pero está limitado por paralelizar solo el primer nivel. Sobre Virtual Threads si bien permiten crear muchas tareas, la JVM sigue usando la misma cantidad de núcleos y, al no haber I/O bloqueante, el modelo de Virtual Threads no aporta beneficios en un problema puramente CPU-bound.
 
